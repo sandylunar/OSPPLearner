@@ -10,9 +10,9 @@ public class Commit {
 	StringBuffer title = new StringBuffer();
 	StringBuffer summary = new StringBuffer();
 	StringBuffer status = new StringBuffer();
-	String detailChanges = new String();
+	StringBuilder detailChanges = new StringBuilder();
 	public void appendDetailChanges(String line){
-		detailChanges+=line;
+		detailChanges.append(line);
 	}
 	public void appendSummary(String line){
 		summary.append(line);
@@ -76,7 +76,7 @@ public class Commit {
 	public void setCommitter(String committer) {
 		this.committer = committer;
 	}
-	public void setDetailChanges(String detailChanges) {
+	public void setDetailChanges(StringBuilder detailChanges) {
 		this.detailChanges = detailChanges;
 	}
 	public void setEvolutionID(String evolutionID) {
@@ -110,7 +110,7 @@ public class Commit {
 		 title=  new StringBuffer();
 		 summary = new StringBuffer();
 		 status = new StringBuffer();
-		 detailChanges = new String();
+		 detailChanges = new StringBuilder();
 		
 		
 	}

@@ -46,9 +46,11 @@ public class Run {
 		
 		if (args[0].equalsIgnoreCase("export-txt-to-mysql")) {
 			String targetDir ="G:\\Sharespace\\experiment\\";
-			String commitTable = "commits_in_all";
+			String commitTable = "commits_3_in_all"; 
 			prd.createTable(commitTable);
-			prd.dumpCommitsToMysql(targetDir, numTags,commitTable);
+			prd.dumpCommitsToMysql(targetDir, numTags,"_fs");
+			prd.dumpCommitsToMysql(targetDir, numTags,"_mm");
+			prd.dumpCommitsToMysql(targetDir, numTags,"_net");
 			prd.close();
 			
 			//testIsCommit();

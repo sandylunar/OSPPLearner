@@ -25,7 +25,8 @@ public class PrepareRawData {
 	Connector connector = new Connector();
 	Statement statement = connector.getNewStatement();
 	String commitTableName;
-	String[] commitTableColumns = {"sha", "evolution_ID","author","author_date","committer","commit_date","title","summary","status","detail_change"};
+	String folder;
+	String[] commitTableColumns = {"sha", "folder" ,"evolution_ID","author","author_date","committer","commit_date","title","summary","status","detail_change"};
 
     private static boolean debug = true;
 
@@ -417,17 +418,25 @@ public class PrepareRawData {
 
 
 	public void dumpCommitsToMysql(String targetDir, int numTags,
-			String commitTable) throws IOException {
+			String folder) throws IOException {
 
 		BufferedReader buffer;
 		Commit commit;
 		String prefix;
-		int linenumber = 5155277;//1568000; 1565169
-		commitTableName = commitTable;
+		int linenumber = 0;//1568000; 1565169 5953000 5155277
+		this.folder = folder;
+		
 		//TODO
 		for (int i = 0; i < 1; i++) { //<numTags
 			//File f = new File(targetDir + i + "_" + i + 1 + ".txt");
-			File f = new File("G:\\Sharespace\\experiment\\112-113.txt");
+			File f = null;
+			if(folder.endsWith("fs"))
+				f = new File("G:\\Sharespace\\experiment\\allcommits-fs.txt");
+			else if(folder.endsWith("mm"))
+				f = new File("G:\\Sharespace\\experiment\\allcommits-mm.txt");
+			
+			else if(folder.endsWith("net"))
+				f = new File("G:\\Sharespace\\experiment\\allcommits-net.txt");
 			
 			if (!f.exists())
 				continue;
@@ -435,7 +444,7 @@ public class PrepareRawData {
 			buffer = new BufferedReader(new InputStreamReader(
 					new FileInputStream(f)));
 			commit = new Commit();
-			commit.setEvolutionID("112-113");
+			//commit.setEvolutionID("112-113");
 			//commit.setEvolutionID(i + "_" + i + 1 );
 			
 			int len = 0;
@@ -457,12 +466,15 @@ public class PrepareRawData {
 				}
 				commit.setSha(line.substring(prefix.length()));
 				try {
-					if(isExists(commit)){
-						System.out.println("Line "+len+": Existed: "+commit.getSha());
-						line = buffer.readLine();
-						len++;
-						continue;
+					if (linenumber > 0) {
+						if (isExists(commit)) {
+							System.out.println("Line " + len + ": Existed: "
+									+ commit.getSha());
+							line = buffer.readLine();
+							len++;
+							continue;
 						}
+					}
 				} catch (SQLException e) {
 					System.err.println("Wrong when parsing line-3: " + len
 							+ "  "+line+" -- file: " + f.getPath());
@@ -566,14 +578,32 @@ public class PrepareRawData {
 				if(isCommitStart(line)) //Èç¹û›]ÓÐsummary
 					continue;
 				
+				boolean forceEnd = false;
 				while (!isCommitStart(line)) {
-					commit.appendDetailChanges(line);
-					line = buffer.readLine();
-					len++;
-					if(len%5000==0){
-						System.out.println("line: "+len+", String.lenght = "+commit.getDetailChanges().length()+", content = "+line);
+					if (commit.getDetailChanges().length() < 1000000) {
+						commit.appendDetailChanges(line);
+						line = buffer.readLine();
+						len++;
+						if (commit.getDetailChanges().length()>1000000 ) {
+							System.out.println("line: " + len
+									+ ", String.lenght = "
+									+ commit.getDetailChanges().length()
+									+ ", content = " + line+"\n sha = "+commit.getSha());
+						}
+					} else{
+						line = buffer.readLine();
+						len++;
+						if (len % 5000 == 0) {
+							System.out.println("Skip line: " + len
+									+  ", content = " + line);
+						}
+						forceEnd = true;
 					}
 				}
+				
+				if(forceEnd)
+					commit.appendDetailChanges("*****Too Long*******");
+						
 
 				if (!isCommitStart(line) && !commit.isEmpity()) {
 					System.err.println("Wrong 2 when parsing line: " + len
@@ -614,15 +644,16 @@ public class PrepareRawData {
 		
 		PreparedStatement preStmt = connector.getNewPreparedStatement(insertSQL);
 		preStmt.setString(1,commit.getSha());
-		preStmt.setString(2, commit.getEvolutionID());
-		preStmt.setString(3,commit.getAuthor());
-		preStmt.setString(4,commit.getAuthorDate());
-		preStmt.setString(5,commit.getCommitter());
-		preStmt.setString(6,commit.getCommitDate());
-		preStmt.setString(7, commit.getTitle());
-		preStmt.setString(8, commit.getSummary());
-		preStmt.setString(9, commit.getStatus());
-		preStmt.setString(10, commit.getDetailChanges());
+		preStmt.setString(2,folder);
+		preStmt.setString(3, commit.getEvolutionID());
+		preStmt.setString(4,commit.getAuthor());
+		preStmt.setString(5,commit.getAuthorDate());
+		preStmt.setString(6,commit.getCommitter());
+		preStmt.setString(7,commit.getCommitDate());
+		preStmt.setString(8, commit.getTitle());
+		preStmt.setString(9, commit.getSummary());
+		preStmt.setString(10, commit.getStatus());
+		preStmt.setString(11, commit.getDetailChanges());
 		
 		System.out.println(preStmt);
 		preStmt.executeUpdate();
@@ -664,7 +695,7 @@ public class PrepareRawData {
 	public boolean isCommitStart(String nextline) {
 		if(!nextline.startsWith("commit "))
 			return false;
-		String sub = nextline.substring(7);
+		String sub = nextline.substring(7).trim();
 		if(sub==null||sub.isEmpty())
 			return false;
 			
@@ -689,10 +720,11 @@ public class PrepareRawData {
 
 	public void createTable(String tableName) throws SQLException {
 		String createSQL = "";
-		if (tableName.equalsIgnoreCase("commits_in_all")) {
+		commitTableName = tableName;
+		if (tableName.startsWith("commits_")) {
 			createSQL = "create table if not exists "
 					+ tableName
-					+ "(id int primary key AUTO_INCREMENT, sha varchar(50), evolution_ID varchar(20), author varchar(100), author_date varchar(50), committer varchar(100), commit_date varchar(50), title text, summary text, status text, detail_change MEDIUMTEXT)";
+					+ "(id int primary key AUTO_INCREMENT, sha varchar(50), folder varchar(50), evolution_ID varchar(20), author varchar(100), author_date varchar(50), committer varchar(100), commit_date varchar(50), title text, summary text, status text, detail_change MEDIUMTEXT)";
 		}
 		statement.executeUpdate(createSQL);
 		if(debug)
