@@ -29,7 +29,7 @@ public class Connector {
 
     /** Creates a new instance of Connector */
     public Connector() {
-	setUrl("jdbc:mysql://localhost:3306/linux");
+	setUrl("jdbc:mysql://localhost:3306/linux-fix-merge");
 	setUser("root");
 	setPwd("123456");
 	conn = getNewConnection();

@@ -51,9 +51,17 @@ public class Run {
 			prd.dumpCommitsToMysql(targetDir, numTags,"_fs");
 			prd.dumpCommitsToMysql(targetDir, numTags,"_mm");
 			prd.dumpCommitsToMysql(targetDir, numTags,"_net");
+			//prd.dumpCommitsToMysql(targetDir, numTags,"_test");
 			prd.close();
 			
 			//testIsCommit();
+			//test();
+		}
+		
+		if (args[0].equalsIgnoreCase("filter-performance-patch")) {
+			String commitTable = "commits_3_in_all"; 
+			String picTable = "performance_commits";
+			prd.createTable(picTable);
 		}
 	}
 	
@@ -62,7 +70,7 @@ public class Run {
 	        
 	        System.out.println(BUFFER_SIZE);
 
-	        File f = new File("G:\\Sharespace\\experiment\\112-113.txt");
+	        File f = new File("G:\\Sharespace\\experiment\\allcommits-net.txt");
 	 
 	        int len = 0;
 	        Long start = System.currentTimeMillis();

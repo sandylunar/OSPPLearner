@@ -7,10 +7,17 @@ public class Commit {
 	String authorDate;
 	String committer;
 	String commitDate;
+	String merge;
 	StringBuffer title = new StringBuffer();
 	StringBuffer summary = new StringBuffer();
 	StringBuffer status = new StringBuffer();
 	StringBuilder detailChanges = new StringBuilder();
+	public String getMerge() {
+		return merge;
+	}
+	public void setMerge(String merge) {
+		this.merge = merge;
+	}
 	public void appendDetailChanges(String line){
 		detailChanges.append(line);
 	}
